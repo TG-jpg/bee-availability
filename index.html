@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- The only place this page can send anything is the owner's own Google Sheet script (script.google.com). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src https://script.google.com https://script.googleusercontent.com; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f2b705">
+<title>When can I visit your hive?</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>🐝 When can I visit your hive?</h1>
+  <p id="range-text" class="muted"></p>
+</header>
+<p id="message" class="message" role="status" hidden></p>
+
+<main>
+<section id="view-form">
+  <label class="field">Your mobile number
+    <input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="e.g. 0412 345 678">
+  </label>
+  <label class="field">Your name
+    <input id="name" type="text" autocomplete="name" placeholder="e.g. Sam Smith">
+  </label>
+
+  <button id="not-here" class="toggle" aria-pressed="false">You can visit when I'm not here (any day, any time)</button>
+  <p class="muted small">Choose this if you don't mind me coming and going while you're out. I'll just need to be able to reach the hive.</p>
+
+  <div id="days-box">
+    <h2>Or choose when you will be home</h2>
+    <p class="muted small">Tap <b>Whole day</b> for 7am to 8pm, or tap the hours that suit you. Tap again to undo.</p>
+    <div id="days"></div>
+  </div>
+
+  <label class="field">Anything I should know? (optional)
+    <textarea id="note" rows="3" placeholder="e.g. gate code, dog in the yard, side gate"></textarea>
+  </label>
+  <button id="send" class="big primary">Send my answer</button>
+</section>
+
+<section id="view-done" hidden>
+  <h2>Thank you!</h2>
+  <p id="done-text"></p>
+  <p class="muted">You can close this page. If anything changes, open the link again and send a new answer; I'll use the latest one.</p>
+</section>
+
+<section id="view-bad" hidden>
+  <h2>This link looks incomplete</h2>
+  <p>Please use the link from the text message I sent you. If it still doesn't work, reply to that message.</p>
+</section>
+</main>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
