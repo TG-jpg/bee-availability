@@ -125,7 +125,10 @@
     pack = data;
     texted = {}; save(KEY_TEXTED, texted);                 // a new pack means a new set of texts
     if (save(KEY_PACK, pack)) {
-      say("Trip pack loaded: " + pack.hives.length + " hives, " + (pack.stops || []).length + " stops.", "ok");
+      var planned = pack.plan ? pack.plan.days.reduce(function (n, d) { return n + d.stops.length; }, 0) : 0;
+      say("Trip pack loaded: " + pack.hives.length + " hives. " + (pack.plan ?
+        "Planned route: " + planned + " stops over " + pack.plan.days.length + " days, " + (pack.texts || []).length + " arrival texts." :
+        "No planned route in this pack (plan a trip on the computer, then send the pack again)."), "ok");
     }
     renderHome();
   }
