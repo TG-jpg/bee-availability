@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- This page can only talk to Google's script servers (your own private spreadsheet script); every other address is blocked. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; manifest-src 'self'; worker-src 'self'; connect-src https://script.google.com https://script.googleusercontent.com; form-action 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bee visit">
+<meta name="theme-color" content="#f2b705">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="style.css">
+<title>Bee visit form</title>
+</head>
+<body>
+<header>
+  <h1>🐝 Bee visit</h1>
+  <p id="pack-status" class="muted"></p>
+  <p id="demo-banner" class="banner" hidden>DEMO trip pack: practice data only</p>
+</header>
+<p id="message" class="message" role="status" hidden></p>
+
+<main>
+<!-- HOME -->
+<section id="view-home">
+  <button id="btn-new-visit" class="big primary">New visit</button>
+  <button id="btn-new-delivery" class="big">Record a delivery</button>
+  <button id="btn-entries" class="big">Saved entries <span id="count-unsent" class="badge">0</span></button>
+  <button id="btn-send" class="big">Send to desktop</button>
+  <button id="btn-get-pack" class="big" hidden>Get trip pack</button>
+  <button id="btn-load-pack" class="big">Load trip pack from a file</button>
+  <input id="pack-file" type="file" accept=".json,application/json" hidden>
+  <p id="link-status" class="muted small"></p>
+  <details id="link-box">
+    <summary>Link to computer</summary>
+    <p class="small">Paste the setup link from the Phone link screen on your computer, then tap Link.</p>
+    <textarea id="link-input" rows="3" placeholder="Paste the setup link here"></textarea>
+    <button id="btn-link" class="big">Link</button>
+  </details>
+  <p class="muted small">Before a trip (with signal): tap Get trip pack. Entries are saved on this phone and work with no
+    signal. After the trip tap Send to desktop. Tip: Share &gt; Add to Home Screen so the phone keeps this page and its entries.</p>
+</section>
+
+<!-- PICK A HIVE -->
+<section id="view-pick" hidden>
+  <h2>Which hive?</h2>
+  <label class="field">Show
+    <select id="hive-filter">
+      <option value="to_visit">Still to visit this year</option>
+      <option value="followup">Second visit needed</option>
+      <option value="visited">Already visited this year</option>
+      <option value="skip">Marked: no visit needed</option>
+      <option value="all">Everything</option>
+    </select></label>
+  <input id="hive-search" type="search" placeholder="Filter (number, name, address)" autocomplete="off">
+  <div id="hive-list" class="list"></div>
+  <button id="btn-other-number" class="link">A hive that isn't in the list</button>
+  <div id="other-number-box" hidden>
+    <input id="other-number" type="number" inputmode="numeric" min="1" placeholder="Hive number">
+    <button id="btn-use-number" class="big">Use this number</button>
+  </div>
+  <button class="big back" data-go="home">Back</button>
+</section>
+
+<!-- VISIT FORM -->
+<section id="view-visit" hidden>
+  <h2 id="visit-title"></h2>
+  <p id="visit-where" class="muted"></p>
+  <p id="visit-last" class="muted small"></p>
+  <div id="paint-box" class="notice" hidden>
+    <strong>This box has no number yet. Write <span id="paint-number"></span> on the side.</strong>
+    <label class="check"><input id="painted" type="checkbox"> I've painted it</label>
+  </div>
+
+  <label class="field">Date <input id="visit-date" type="date"></label>
+
+  <div class="field">
+    <div class="label"><span id="weight-label">Weight</span> <span id="weight-out" class="value">not weighed</span></div>
+    <input id="weight" type="number" inputmode="decimal" step="0.01" min="0" max="30" placeholder="kg, e.g. 2.45">
+    <button id="weight-clear" class="small">Not weighed</button>
+  </div>
+
+  <div class="field"><div class="label">Shanks brood disease (0 = none seen)</div><div id="seg-shanks" class="seg"></div></div>
+
+  <div class="field">
+    <div class="label">Activity: bees leaving in one minute <span id="act-out" class="value">not counted</span></div>
+    <button id="act-start" class="big">Start 60 second count</button>
+    <button id="act-tap" class="tap" disabled>Tap each bee that leaves</button>
+    <div class="row">
+      <button id="act-minus" class="small">-1</button>
+      <button id="act-reset" class="small">Reset</button>
+    </div>
+  </div>
+
+  <div class="field"><button id="insulation" class="toggle" aria-pressed="false">Needs extra insulation</button></div>
+  <div class="field"><div class="label">Winter check or feeding needed</div><div id="seg-winter" class="seg"></div></div>
+  <div class="field"><div class="label">Condition</div><div id="seg-condition" class="seg"></div></div>
+  <div class="field"><div class="label">Outcome</div><div id="seg-outcome" class="seg"></div></div>
+
+  <div id="split-panel" class="panel" hidden>
+    <h3>Split</h3>
+    <p id="split-numbers" class="small"></p>
+    <div class="label">Where does the box that leaves go?</div>
+    <div id="seg-split-to" class="seg"></div>
+    <label id="split-customer-box" class="field" hidden>Customer
+      <select id="split-customer"></select></label>
+    <div class="label">Which box leaves?</div>
+    <div id="seg-leaving" class="seg"></div>
+    <div class="label">Now weigh the two hives after the split (kg)</div>
+    <label class="field"><span id="pw-label">Original box</span>
+      <input id="weight-parent" type="number" inputmode="decimal" step="0.01" min="0" max="30" placeholder="kg"></label>
+    <label class="field"><span id="nw-label">New box</span>
+      <input id="weight-new" type="number" inputmode="decimal" step="0.01" min="0" max="30" placeholder="kg"></label>
+    <button id="unusual" class="toggle" aria-pressed="false">Unusual: the old box is the BOTTOM box in the new hive</button>
+    <label class="check"><input id="new-painted" type="checkbox"> <span id="new-painted-label">I've painted the number on the new box</span></label>
+  </div>
+
+  <div class="field">
+    <button id="followup" class="toggle" aria-pressed="false">Needs a second visit / check-up</button>
+    <input id="followup-note" type="text" placeholder="What to check or when to come back (optional)" hidden>
+  </div>
+
+  <label class="field">Notes <textarea id="notes" rows="3"></textarea></label>
+  <button id="save-visit" class="big primary">Save visit</button>
+  <button class="big back" data-go="pick">Cancel</button>
+</section>
+
+<!-- DELIVERY -->
+<section id="view-delivery" hidden>
+  <h2>Record a delivery</h2>
+  <p id="delivery-empty" class="notice" hidden>Nothing to deliver: the trip pack has no delivery stops.</p>
+  <div id="delivery-fields">
+    <label class="field">Where <select id="stop-select"></select></label>
+    <label class="field">Number of the hive I dropped off
+      <input id="deliv-number" type="number" inputmode="numeric" min="1" placeholder="e.g. 165"></label>
+    <p id="stock-hint" class="muted small"></p>
+    <label class="check"><input id="deliv-painted" type="checkbox"> I've painted its number on the box</label>
+    <label class="field">Date <input id="deliv-date" type="date"></label>
+    <label class="field">Notes <textarea id="deliv-notes" rows="2"></textarea></label>
+    <button id="save-delivery" class="big primary">Save delivery</button>
+  </div>
+  <button class="big back" data-go="home">Back</button>
+</section>
+
+<!-- SAVED ENTRIES -->
+<section id="view-entries" hidden>
+  <h2>Saved entries</h2>
+  <div id="entry-list" class="list"></div>
+  <p id="entries-empty" class="muted">Nothing saved yet.</p>
+  <button id="btn-send-2" class="big primary">Send to desktop</button>
+  <button id="btn-clear-sent" class="big">Remove entries already sent</button>
+  <button class="big back" data-go="home">Back</button>
+</section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
