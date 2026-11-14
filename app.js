@@ -40,6 +40,8 @@
   var days = [];                 // ["2026-12-02", ...]
   var chosen = {};               // {"2026-12-02": {7: true, 8: true}}
   var notHere = false;
+  var lowActivity = false;
+  var LOW_MARKER = "[Hive dead or low activity]";   // goes at the start of the note; the app reads it back
   var sending = false;
 
   if (from && to && from <= to) {
@@ -86,6 +88,7 @@
       box.appendChild(card);
     });
     $("not-here").setAttribute("aria-pressed", String(notHere));
+    $("low-activity").setAttribute("aria-pressed", String(lowActivity));
     $("days-box").className = notHere ? "faded" : "";
   }
 
@@ -96,7 +99,7 @@
       if (hours.length) slots[day] = hours;
     });
     return { v: 1, phone: $("phone").value.trim(), name: $("name").value.trim(), not_here: notHere,
-             slots: notHere ? {} : slots, note: $("note").value.trim(), from: days[0], to: days[days.length - 1] };
+             slots: notHere ? {} : slots, note: (lowActivity ? LOW_MARKER + " " : "") + $("note").value.trim(), from: days[0], to: days[days.length - 1] };
   }
 
   function send() {
@@ -142,6 +145,7 @@
     $("range-text").textContent = "I'm planning to visit between " + niceDate(parseDate(days[0])) + " and " +
       niceDate(parseDate(days[days.length - 1])) + ".";
     $("not-here").addEventListener("click", function () { notHere = !notHere; draw(); });
+    $("low-activity").addEventListener("click", function () { lowActivity = !lowActivity; draw(); });
     $("send").addEventListener("click", send);
     draw();
   }

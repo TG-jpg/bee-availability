@@ -6,12 +6,12 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src https://script.google.com https://script.googleusercontent.com; form-action 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f2b705">
-<title>When can I visit your hive?</title>
+<title>When can I visit?</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header>
-  <h1>🐝 When can I visit your hive?</h1>
+  <h1>🐝 When can I visit?</h1>
   <p id="range-text" class="muted"></p>
 </header>
 <p id="message" class="message" role="status" hidden></p>
@@ -33,6 +33,9 @@
     <p class="muted small">Tap <b>Whole day</b> for 7am to 8pm, or tap the hours that suit you. Tap again to undo.</p>
     <div id="days"></div>
   </div>
+
+  <button id="low-activity" class="toggle" aria-pressed="false">The hive is dead or has low activity</button>
+  <p class="muted small">Tap this if the bees look dead or barely active, so I can plan to check it first.</p>
 
   <label class="field">Anything I should know? (optional)
     <textarea id="note" rows="3" placeholder="e.g. gate code, dog in the yard, side gate"></textarea>
