@@ -4,6 +4,7 @@
 (function () {
   "use strict";
 
+  var KEY_TEXTED = "bee.texted";
   var KEY_PACK = "bee.pack", KEY_ENTRIES = "bee.entries", KEY_USED = "bee.usedMax", KEY_RELAY = "bee.relay";
   var $ = function (id) { return document.getElementById(id); };
 
@@ -18,6 +19,7 @@
   var pack = load(KEY_PACK, null);
   var entries = load(KEY_ENTRIES, []);
   var usedMax = load(KEY_USED, 0);
+  var texted = load(KEY_TEXTED, {});           // {stop key + day: true} once you've tapped Text for someone
   var relay = load(KEY_RELAY, null);          // {u: script address, k: secret key}, set by the setup link
   if (navigator.storage && navigator.storage.persist) { navigator.storage.persist().catch(function () {}); }
 
@@ -55,7 +57,7 @@
     for (var i = 0; i < pack.hives.length; i++) if (pack.hives[i].number === n) return pack.hives[i];
     return null;
   }
-  var views = ["home", "pick", "visit", "delivery", "entries"];
+  var views = ["home", "pick", "visit", "delivery", "entries", "route", "texts"];
   function show(name) {
     views.forEach(function (v) { $("view-" + v).hidden = v !== name; });
     window.scrollTo(0, 0);
@@ -63,6 +65,8 @@
     if (name === "pick") renderPick();
     if (name === "entries") renderEntries();
     if (name === "delivery") renderDelivery();
+    if (name === "route") renderRoute();
+    if (name === "texts") renderTexts();
   }
   function unsent() { return entries.filter(function (e) { return !e.sentAt; }); }
 
@@ -100,6 +104,9 @@
     }
     $("demo-banner").hidden = !(pack && pack.database === "demo");
     $("btn-get-pack").hidden = !relay;
+    $("btn-route").hidden = !(pack && pack.plan);
+    $("btn-texts").hidden = !(pack && pack.texts && pack.texts.length);
+    $("count-texts").textContent = String(pack && pack.texts ? pack.texts.filter(function (t) { return !texted[t.key]; }).length : 0);
     $("link-status").textContent = relay ? "Linked to your computer through Google." :
       "Not linked yet: open 'Link to computer' below and paste the setup link.";
     $("link-box").open = !relay;
@@ -116,6 +123,7 @@
       return;
     }
     pack = data;
+    texted = {}; save(KEY_TEXTED, texted);                 // a new pack means a new set of texts
     if (save(KEY_PACK, pack)) {
       say("Trip pack loaded: " + pack.hives.length + " hives, " + (pack.stops || []).length + " stops.", "ok");
     }
@@ -154,6 +162,68 @@
   function getPack() {
     say("Getting the trip pack...", "");
     ask("get_pack").then(function (a) { loadPackText(a.pack); }).catch(function (err) { say(err.message, "bad"); });
+  }
+
+  // ------------------------------------------------------------ route and arrival texts (made on the computer)
+  function clock(m) {
+    m = Math.round(m); var h = Math.floor(m / 60), mm = m % 60;
+    return ((h % 12) || 12) + ":" + String(mm).padStart(2, "0") + (h < 12 ? "am" : "pm");
+  }
+  function renderRoute() {
+    var box = $("route-days");
+    box.textContent = "";
+    var plan = pack && pack.plan;
+    if (!plan) { box.appendChild(el("p", "No route in this trip pack. Plan a trip on the computer, then send the trip pack again.", "notice")); return; }
+    $("route-note").textContent = "Planned " + plan.created_at.replace("T", " ").slice(0, 16) + ". Arrival times are estimates.";
+    var now = today();
+    var days = plan.days.slice().sort(function (a, b) { return (a.date === now ? -1 : 0) - (b.date === now ? -1 : 0); });
+    days.forEach(function (day) {
+      var card = el("div", undefined, "panel");
+      card.appendChild(el("h3", (day.date === now ? "Today: " : "") + day.label));
+      card.appendChild(el("p", "Leave about " + clock(day.leave) + ", home about " + clock(day.home_at), "small muted"));
+      day.links.forEach(function (url, i) {
+        var a = el("a", "Open in Google Maps" + (day.links.length > 1 ? " (part " + (i + 1) + ")" : ""), "linkbtn");
+        a.href = url; a.target = "_blank"; a.rel = "noopener";
+        card.appendChild(a);
+      });
+      day.stops.forEach(function (s) {
+        var item = el("div", undefined, "item");
+        item.appendChild(el("div", clock(s.arrive) + "  " + s.name + (s.deliver ? "  (delivering a hive)" : "")));
+        if (s.address) item.appendChild(el("div", s.address, "small muted"));
+        (s.hives || []).forEach(function (n) {
+          var b = el("button", "Visit hive #" + n, "small");
+          b.type = "button";
+          b.addEventListener("click", function () { startVisit(n); });
+          item.appendChild(b);
+        });
+        if (s.deliver) {
+          var d = el("button", "Record a delivery", "small");
+          d.type = "button";
+          d.addEventListener("click", function () { show("delivery"); });
+          item.appendChild(d);
+        }
+        card.appendChild(item);
+      });
+      box.appendChild(card);
+    });
+  }
+  function renderTexts() {
+    var list = $("text-list");
+    list.textContent = "";
+    var texts = (pack && pack.texts) || [];
+    if (!texts.length) { list.appendChild(el("p", "No texts in this trip pack.", "notice")); return; }
+    texts.forEach(function (t) {
+      var item = el("div", undefined, "item");
+      item.appendChild(el("div", (texted[t.key] ? "✔ " : "") + t.name + " - " + t.day + " about " + t.arrive));
+      var a = el("a", texted[t.key] ? "Text again" : "Text", "linkbtn");
+      a.href = t.sms;
+      a.addEventListener("click", function () {
+        texted[t.key] = true; save(KEY_TEXTED, texted);
+        setTimeout(renderTexts, 400);
+      });
+      item.appendChild(a);
+      list.appendChild(item);
+    });
   }
 
   // ------------------------------------------------------------ pick a hive
@@ -453,6 +523,8 @@
     $("btn-send-2").addEventListener("click", sendEntries);
     $("btn-load-pack").addEventListener("click", function () { $("pack-file").click(); });
     $("btn-get-pack").addEventListener("click", getPack);
+    $("btn-route").addEventListener("click", function () { show("route"); });
+    $("btn-texts").addEventListener("click", function () { show("texts"); });
     $("btn-link").addEventListener("click", function () {
       var link = parseLink($("link-input").value);
       if (!link) { say("That doesn't look like the setup link. Copy the whole link from the Phone link screen.", "bad"); return; }

@@ -25,6 +25,8 @@
 <main>
 <!-- HOME -->
 <section id="view-home">
+  <button id="btn-route" class="big" hidden>Route and stops</button>
+  <button id="btn-texts" class="big" hidden>Arrival texts <span id="count-texts" class="badge">0</span></button>
   <button id="btn-new-visit" class="big primary">New visit</button>
   <button id="btn-new-delivery" class="big">Record a delivery</button>
   <button id="btn-entries" class="big">Saved entries <span id="count-unsent" class="badge">0</span></button>
@@ -41,6 +43,22 @@
   </details>
   <p class="muted small">Before a trip (with signal): tap Get trip pack. Entries are saved on this phone and work with no
     signal. After the trip tap Send to desktop. Tip: Share &gt; Add to Home Screen so the phone keeps this page and its entries.</p>
+</section>
+
+<!-- ROUTE -->
+<section id="view-route" hidden>
+  <h2>Route and stops</h2>
+  <p id="route-note" class="muted small"></p>
+  <div id="route-days"></div>
+  <button class="big back" data-go="home">Back</button>
+</section>
+
+<!-- ARRIVAL TEXTS -->
+<section id="view-texts" hidden>
+  <h2>Arrival texts</h2>
+  <p class="muted small">Tap Text next to a name: Messages opens with the text ready. Press send, then come back here.</p>
+  <div id="text-list" class="list"></div>
+  <button class="big back" data-go="home">Back</button>
 </section>
 
 <!-- PICK A HIVE -->

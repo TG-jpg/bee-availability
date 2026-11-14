@@ -45,3 +45,7 @@ input[type=range] { width: 100%; height: 40px; }
 .list .item { border: 2px solid var(--line); border-radius: 12px; padding: 10px 12px; background: #fff; }
 .item .sent { color: var(--ok); font-weight: 700; }
 .item .unsent { color: #b26a00; font-weight: 700; }
+
+a.linkbtn { display: inline-block; min-height: 40px; line-height: 40px; padding: 0 14px; margin: 6px 6px 0 0; border-radius: 10px;
+  background: var(--accent, #f2b705); color: #000; font-weight: 700; text-decoration: none; }
+.panel .item { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; margin: 8px 0; background: #fff; }
