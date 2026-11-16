@@ -1,6 +1,6 @@
 // Keeps the page working with no signal: saves its own files the first time it loads.
 // (It never stores or sends any customer data; entries live in the phone's localStorage.)
-const CACHE = "bee-form-v8";   // change this number whenever the files change, so phones pick up the new version
+const CACHE = "bee-form-v9";   // change this number whenever the files change, so phones pick up the new version
 const FILES = ["./", "index.html", "style.css", "app.js", "manifest.webmanifest", "icon-180.png", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", (event) => {

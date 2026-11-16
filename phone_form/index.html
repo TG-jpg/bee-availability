@@ -27,6 +27,7 @@
 <section id="view-home">
   <button id="btn-route" class="big" hidden>Route and stops</button>
   <button id="btn-texts" class="big" hidden>Arrival texts <span id="count-texts" class="badge">0</span></button>
+  <button id="btn-survey-texts" class="big" hidden>Visit-form texts <span id="count-survey-texts" class="badge">0</span></button>
   <button id="btn-new-visit" class="big primary">New visit</button>
   <button id="btn-new-delivery" class="big">Record a delivery</button>
   <button id="btn-entries" class="big">Saved entries <span id="count-unsent" class="badge">0</span></button>
@@ -55,8 +56,8 @@
 
 <!-- ARRIVAL TEXTS -->
 <section id="view-texts" hidden>
-  <h2>Arrival texts</h2>
-  <p class="muted small">Tap Text next to a name: Messages opens with the text ready. Press send, then come back here.</p>
+  <h2 id="texts-title">Arrival texts</h2>
+  <p id="texts-note" class="muted small">Tap Text next to a name: Messages opens with the text ready. Press send, then come back here.</p>
   <div id="text-list" class="list"></div>
   <button class="big back" data-go="home">Back</button>
 </section>

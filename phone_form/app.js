@@ -107,6 +107,9 @@
     $("btn-route").hidden = !(pack && pack.plan);
     $("btn-texts").hidden = !(pack && pack.texts && pack.texts.length);
     $("count-texts").textContent = String(pack && pack.texts ? pack.texts.filter(function (t) { return !texted[t.key]; }).length : 0);
+    $("btn-survey-texts").hidden = !(pack && pack.survey_texts && pack.survey_texts.length);
+    $("count-survey-texts").textContent = String(pack && pack.survey_texts ?
+      pack.survey_texts.filter(function (t) { return !texted[t.key]; }).length : 0);
     $("link-status").textContent = relay ? "Linked to your computer through Google." :
       "Not linked yet: open 'Link to computer' below and paste the setup link.";
     $("link-box").open = !relay;
@@ -123,7 +126,9 @@
       return;
     }
     pack = data;
-    texted = {}; save(KEY_TEXTED, texted);                 // a new pack means a new set of texts
+    var kept = {};                                         // a new pack means new arrival texts; visit-form ticks carry over
+    Object.keys(texted).forEach(function (k) { if (k.indexOf("s:") === 0) kept[k] = true; });
+    texted = kept; save(KEY_TEXTED, texted);
     if (save(KEY_PACK, pack)) {
       var planned = pack.plan ? pack.plan.days.reduce(function (n, d) { return n + d.stops.length; }, 0) : 0;
       say("Trip pack loaded: " + pack.hives.length + " hives. " + (pack.plan ?
@@ -210,14 +215,21 @@
       box.appendChild(card);
     });
   }
+  var textsKind = "texts";                       // "texts" = arrival texts, "survey_texts" = the When can I visit? link
+  function openTexts(kind) { textsKind = kind; show("texts"); }
   function renderTexts() {
     var list = $("text-list");
+    var survey = textsKind === "survey_texts";
+    $("texts-title").textContent = survey ? "Visit-form texts" : "Arrival texts";
+    $("texts-note").textContent = survey ?
+      "These ask people when they are home (the 'When can I visit?' link). Tap Text next to a name: Messages opens with the text ready. Press send, then come back here." :
+      "Tap Text next to a name: Messages opens with the text ready. Press send, then come back here.";
     list.textContent = "";
-    var texts = (pack && pack.texts) || [];
+    var texts = (pack && pack[textsKind]) || [];
     if (!texts.length) { list.appendChild(el("p", "No texts in this trip pack.", "notice")); return; }
     texts.forEach(function (t) {
       var item = el("div", undefined, "item");
-      item.appendChild(el("div", (texted[t.key] ? "✔ " : "") + t.name + " - " + t.day + " about " + t.arrive));
+      item.appendChild(el("div", (texted[t.key] ? "✔ " : "") + t.name + (survey ? "" : " - " + t.day + " about " + t.arrive)));
       var a = el("a", texted[t.key] ? "Text again" : "Text", "linkbtn");
       a.href = t.sms;
       a.addEventListener("click", function () {
@@ -527,7 +539,8 @@
     $("btn-load-pack").addEventListener("click", function () { $("pack-file").click(); });
     $("btn-get-pack").addEventListener("click", getPack);
     $("btn-route").addEventListener("click", function () { show("route"); });
-    $("btn-texts").addEventListener("click", function () { show("texts"); });
+    $("btn-texts").addEventListener("click", function () { openTexts("texts"); });
+    $("btn-survey-texts").addEventListener("click", function () { openTexts("survey_texts"); });
     $("btn-link").addEventListener("click", function () {
       var link = parseLink($("link-input").value);
       if (!link) { say("That doesn't look like the setup link. Copy the whole link from the Phone link screen.", "bad"); return; }
