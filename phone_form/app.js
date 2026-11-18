@@ -107,6 +107,8 @@
     $("btn-route").hidden = !(pack && pack.plan);
     $("btn-texts").hidden = !(pack && pack.texts && pack.texts.length);
     $("count-texts").textContent = String(pack && pack.texts ? pack.texts.filter(function (t) { return !texted[t.key]; }).length : 0);
+    $("btn-ring").hidden = !(pack && pack.to_ring && pack.to_ring.length);
+    $("count-ring").textContent = String(pack && pack.to_ring ? pack.to_ring.filter(function (t) { return !texted[t.key]; }).length : 0);
     $("btn-survey-texts").hidden = !(pack && pack.survey_texts && pack.survey_texts.length);
     $("count-survey-texts").textContent = String(pack && pack.survey_texts ?
       pack.survey_texts.filter(function (t) { return !texted[t.key]; }).length : 0);
@@ -127,7 +129,7 @@
     }
     pack = data;
     var kept = {};                                         // a new pack means new arrival texts; visit-form ticks carry over
-    Object.keys(texted).forEach(function (k) { if (k.indexOf("s:") === 0) kept[k] = true; });
+    Object.keys(texted).forEach(function (k) { if (k.indexOf("s:") === 0 || k.indexOf("r:") === 0 || k.indexOf("a:") === 0) kept[k] = true; });
     texted = kept; save(KEY_TEXTED, texted);
     if (save(KEY_PACK, pack)) {
       var planned = pack.plan ? pack.plan.days.reduce(function (n, d) { return n + d.stops.length; }, 0) : 0;
@@ -219,9 +221,11 @@
   function openTexts(kind) { textsKind = kind; show("texts"); }
   function renderTexts() {
     var list = $("text-list");
-    var survey = textsKind === "survey_texts";
-    $("texts-title").textContent = survey ? "Visit-form texts" : "Arrival texts";
-    $("texts-note").textContent = survey ?
+    var survey = textsKind === "survey_texts", ring = textsKind === "to_ring";
+    $("texts-title").textContent = ring ? "People to ring" : survey ? "Visit-form texts" : "Arrival texts";
+    $("texts-note").textContent = ring ?
+      "These haven't answered the 'When can I visit?' form. Tap Call next to a name to ring them; they get a tick once you've tapped." :
+      survey ?
       "These ask people when they are home (the 'When can I visit?' link). Tap Text next to a name: Messages opens with the text ready. Press send, then come back here." :
       "Tap Text next to a name: Messages opens with the text ready. Press send, then come back here.";
     list.textContent = "";
@@ -229,9 +233,10 @@
     if (!texts.length) { list.appendChild(el("p", "No texts in this trip pack.", "notice")); return; }
     texts.forEach(function (t) {
       var item = el("div", undefined, "item");
-      item.appendChild(el("div", (texted[t.key] ? "✔ " : "") + t.name + (survey ? "" : " - " + t.day + " about " + t.arrive)));
-      var a = el("a", texted[t.key] ? "Text again" : "Text", "linkbtn");
-      a.href = t.sms;
+      item.appendChild(el("div", (texted[t.key] ? "✔ " : "") + t.name + (ring ? " - " + (t.phone || "NO NUMBER") + (t.region ? " (" + t.region + ")" : "") : survey ? "" : " - " + t.day + " about " + t.arrive)));
+      if (ring && !t.tel) { list.appendChild(item); return; }
+      var a = el("a", ring ? (texted[t.key] ? "Call again" : "Call") : (texted[t.key] ? "Text again" : "Text"), "linkbtn");
+      a.href = ring ? t.tel : t.sms;
       a.addEventListener("click", function () {
         texted[t.key] = true; save(KEY_TEXTED, texted);
         setTimeout(renderTexts, 400);
@@ -541,6 +546,7 @@
     $("btn-route").addEventListener("click", function () { show("route"); });
     $("btn-texts").addEventListener("click", function () { openTexts("texts"); });
     $("btn-survey-texts").addEventListener("click", function () { openTexts("survey_texts"); });
+    $("btn-ring").addEventListener("click", function () { openTexts("to_ring"); });
     $("btn-link").addEventListener("click", function () {
       var link = parseLink($("link-input").value);
       if (!link) { say("That doesn't look like the setup link. Copy the whole link from the Phone link screen.", "bad"); return; }
