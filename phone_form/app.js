@@ -373,6 +373,10 @@
     if (!draft) return;
     if (!draft.date) { say("Pick the date first.", "bad"); return; }
     var split = null;
+    if (draft.outcome === "split" && !draft.split_to) {
+      say("You chose Split, so tap where the new box goes (sold, replaces a dead hive, or keep in my stock). Without it no new hive is recorded.", "bad");
+      return;
+    }
     if (draft.outcome === "split" && draft.split_to) {
       if ((draft.split_to === "sold" || draft.split_to === "replaced_dead") && !draft.split_customer) {
         say("Choose the customer the new box goes to.", "bad");
